@@ -1,18 +1,46 @@
 import socket
-# import threading
+import threading  
 # import os
 
-if __name__ == "__main__":
+def client():
     ip = "127.0.0.1"
-    port = 12134
+    port = 12344
     
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.connect((ip, port))
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     
-    string = input("\n-> Digite a mensagem: ")
-    server.send(bytes(string, "utf-8"))
+    try:
+        client.connect((ip, port))
+    except:
+        return print("\n--> ERRO: NAO FOI POSSIVEL SE CONECTAR AO SERVIDOR.")
     
-    # mostra no client o que o server ta recebendo
-    buffer = server.recv(1024)
-    buffer = buffer.decode("utf-8")
-    print(f"\n-> Server: {buffer}")
+    username = input("> Usuario: ")
+    print("\n--- CONECTADO ---")
+    
+    #criando multiplas threads:
+    thread_1 = threading.Thread(target=receiveMessages, args=[client])
+    thread_2 = threading.Thread(target=sendMessages, args=[client, username])
+    
+    thread_1.start()
+    thread_2.start()
+    
+    
+def receiveMessages(client):
+    while True:
+        try:
+            message = client.recv(2048).decode("utf-8")
+            print(message+'\n')
+        except:
+            print('\n--> NÃO FOI POSSIVEL PERMANECER CONECTADO NO SERVIDOR.')
+            print('-> Pressione <ENTER> pra continuar...')
+            client.close()
+            break
+    
+def sendMessages(client, username):
+    while True:
+        try:
+            message = input("\n")
+            client.send(f'<{username}> {message}' .encode("utf-8"))
+        except:
+            return 
+
+client()

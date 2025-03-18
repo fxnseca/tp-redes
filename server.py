@@ -1,30 +1,51 @@
 import socket
+import threading
 
+clients = []
 
-if __name__ == "__main__":
+def server():
     ip = "127.0.0.1"
-    port = 12134
-    
-    #criando o server com o socket
-    #AF_INET: a "familia" do endereço é IPV4
-    #SOCK_STREAM: o tipo de protocolo de conexão é TCP
+    port = 12344
     
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind((ip, port))
-    server.listen(3) # nro de conexões que podem esperar no servidor 
+    
+    try:
+        server.bind((ip, port))
+        server.listen(5) # nro de conexões que podem esperar no servidor 
+    except:
+        return print("\n--> ERRO: NAO FOI POSSIVEL INICIAR O SERVIDOR.")
     
     while True:
-        client, adress = server.accept()
-        print(f"--- CONEXAO ESTABELECIDA: {adress[0]}:{adress[1]} ---")
+        client, addr = server.accept()
+        print(f"--- CONEXAO ESTABELECIDA: {addr[0]}:{addr[1]} ---")
+        clients.append(client) #adiciona o cliente na lista de clientes
         
-        string = client.recv(1024)
-        string = string.decode("utf-8")
-        string = string.upper() #transforma o texto em CAPSLOCK
-        client.send(bytes(string, "utf-8"))
-        
-        # print(f"\n--> Mensagem recebida: {string}")
+        thread = threading.Thread(target=tratamentoMessages, args=[client])
+        thread.start()
         
         
-        client.close()
-        print("\n--- CONEXAO ENCERRADA ---\n")
+def tratamentoMessages(client):
+    while True:
+        try:
+            message = client.recv(2048)
+            broadcast(message, client)
+        except:
+            deleteClient(client)
+            break  #pra parar de "ouvir" a mensagem desse cliente, ja que foi deletado.
         
+
+def broadcast(message, client):
+    for clnt in clients:
+        if clnt!= client:
+            try:
+                clnt.send(message)
+            except:
+                deleteClient(clnt)
+
+                
+def deleteClient(client):
+    print(f"--- CONEXAO ENCERRADA: {client} se desconectou ---")
+    clients.remove(client)
+        
+        
+server()

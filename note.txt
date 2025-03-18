@@ -1,0 +1,42 @@
+Anotações sobre o trabalho
+
+- Se usa o import threading pra fazer as conexões rodarem em paralelo.
+
+## PARTE CLIENT.PY ##
+
+#criando o server e o client com o socket
+    #AF_INET: a "familia" do endereço é IPV4
+    #SOCK_STREAM: o tipo de protocolo de conexão é TCP
+
+#USERNAME:
+    O client, ao enviar uma mensagem pro servidor, ele fará um broadcast para os outros clientes conectados a ele.
+    Com isso cada user que se conectar precisa ser identificado.
+
+#receiveMessages(client):
+    Função pra receber as mensagens, tendo como paramentro um socket "client".
+    #while True: enquanto tiver algo conectado lá, o servidor sempre vai estar mandando algo.
+    - se usa ".decode("utf-8")" pra decodificar a mensagem de bytes pra string.
+    - foi usado 2048 bytes (2 KB), porque pode receber mais dados de uma vez, reduzindo a necessidade de múltiplas chamadas para recv().
+
+#sendMessages(client):
+    Função pra enviar as mensagens, tendo como paramentro um socket "client" e o usuário.
+    - se usa ".encode("utf-8")" pra codificar a mensagem de string pra bytes.
+
+
+
+
+## PARTE SERVER.PY ##
+
+# "client, addr = server.accept()" : O servidor vai aceitar "todo" cliente que requisitar acesso, junto com o endereço dele.
+    Depois que adiciona o cliente na lista de clientes, se cria uma thread com ele, e inicia a thread. 
+
+#Função 'def tratamentoMessages(client)'
+    Criado para "escutar" as mensagens que os usuários enviam para o server. Além disso, ele faz um broadcast(def broadcast), onde ele envia
+    a mensagem daquele usuario para todos os outros, com exceção dele mesmo. 
+
+
+#Função 'def broadcast'
+    Confere um a um na lista de clientes, pra não mandar a mensagem pra quem a enviou. Caso não Dê certo (except), ele vai deletar o cliente da 
+    lista (def deleteClient).
+
+
