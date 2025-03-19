@@ -1,6 +1,7 @@
-Anotações sobre o trabalho
+Anotações sobre o trabalho:
 
-- Se usa o import threading pra fazer as conexões rodarem em paralelo.
+- Se usa o 'import threading' pra fazer as conexões rodarem em paralelo.
+- se usa o 'import os' pra trabalhar com arquivos
 
 ## PARTE CLIENT.PY ##
 
@@ -29,6 +30,12 @@ Anotações sobre o trabalho
 
 # "client, addr = server.accept()" : O servidor vai aceitar "todo" cliente que requisitar acesso, junto com o endereço dele.
     Depois que adiciona o cliente na lista de clientes, se cria uma thread com ele, e inicia a thread. 
+
+#Função load_users(): 
+    Em 'usuarios = {}', usar {} significa um dicionario, e não uma lista [], conseguindo guardar valores como chave e valor
+("user1": "senha1").
+    - Como acessar: usuarios["user1"] retorna a "senha1".
+
 
 #Função 'def tratamentoMessages(client)'
     Criado para "escutar" as mensagens que os usuários enviam para o server. Além disso, ele faz um broadcast(def broadcast), onde ele envia

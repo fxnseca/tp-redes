@@ -1,6 +1,6 @@
 import socket
 import threading  
-# import os
+import os 
 
 def client():
     ip = "127.0.0.1"
@@ -12,9 +12,24 @@ def client():
         client.connect((ip, port))
     except:
         return print("\n--> ERRO: NAO FOI POSSIVEL SE CONECTAR AO SERVIDOR.")
+
+    #Enviar login
+    print(client.recv(1024).decode("utf-8"), end="")
+    username = input()
+    client.send(username.encode("utf-8"))
     
-    username = input("> Usuario: ")
-    print("\n--- CONECTADO ---")
+    #Enviar senha
+    print(client.recv(1024).decode("utf-8"), end="")
+    password = input()
+    client.send(password.encode("utf-8"))
+    
+    #Confere resposta do servidor
+    resposta = client.recv(1024).decode("utf-8")
+    if "Erro" in resposta:
+        print(resposta)
+        return  #termina o programa se o login falhar
+    
+    print(resposta) #Mostra "login bem sucedido" ou "novo cadastro"
     
     #criando multiplas threads:
     thread_1 = threading.Thread(target=receiveMessages, args=[client])
