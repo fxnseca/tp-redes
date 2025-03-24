@@ -32,6 +32,10 @@ def client():
         print("\n--> Conexão encerrada devido a erro de login.")
         client.close()
         return  
+    if "n" in resposta:
+        print("\n--> Conexão encerrada devido a erro de cadastro.")
+        client.close()
+        return
     
     # Criando múltiplas threads:
     thread_1 = threading.Thread(target=receiveMessages, args=[client])
