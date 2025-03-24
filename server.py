@@ -6,7 +6,7 @@ clients = []
 
 def server():
     ip = "127.0.0.1"
-    port = 1234
+    port = 12443
     
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     
@@ -26,6 +26,23 @@ def server():
         thread.start()
 
 
+# def load_users():
+#     usuarios = {}  # Dicionário para armazenar usuários
+
+#     if not os.path.exists("database.txt"):  # Verifica se o arquivo existe
+#         with open("database.txt", "w") as file:
+#             file.write("admin:1234\n")  # Adiciona um usuário padrão
+
+#     # Agora carrega os usuários do arquivo
+#     with open("database.txt", "r") as file:
+#         for linha in file:
+#             user, senha = linha.strip().split(":")
+#             usuarios[user] = senha
+            
+#     return usuarios
+
+# usuarios = load_users()  # Carrega os usuários ao iniciar o servidor
+
 def load_users():
     usuarios = {}  # Dicionário para armazenar usuários
 
@@ -33,58 +50,51 @@ def load_users():
         with open("database.txt", "w") as file:
             file.write("admin:1234\n")  # Adiciona um usuário padrão
 
-    # Agora carrega os usuários do arquivo
+    # Agora carrega os usuários do arquivo corretamente
     with open("database.txt", "r") as file:
         for linha in file:
-            user, senha = linha.strip().split(":")
-            usuarios[user] = senha
-            
+            partes = linha.strip().split(":")  
+
+            # Garante que há apenas usuário e senha
+            if len(partes) == 2:
+                user, senha = partes
+                usuarios[user] = senha
+            else:
+                print(f"⚠ Erro ao carregar linha mal formatada: '{linha.strip()}'")
     return usuarios
 
 usuarios = load_users()  # Carrega os usuários ao iniciar o servidor
 
 
+
+
+
 def save_users(username, password):
     with open("database.txt", "a") as file:  # 'a' para adicionar sem apagar o conteúdo
         file.write(f"{username}:{password}\n")
+        
     
 
 def tratamento_messages(client):
     try:
+        # Recebe a escolha do cliente (Login ou Registro)
+        opcao = client.recv(1024).decode("utf-8").strip()
+
         client.send("> Digite seu usuário: ".encode("utf-8"))
         username = client.recv(1024).decode("utf-8").strip()
-        if not username in usuarios:
-            client.send("--> USUARIO NAO CADASTRADO --\n> Deseja se cadastrar? (s/n): ".encode("utf-8"))
-            resposta = client.recv(1024).decode("utf-8").strip()
-            if resposta == "n":
-                client.send("--> CONEXÃO ENCERRADA --\n".encode("utf-8"))
-                client.close()
-                return
-            else:
-                client.send("> Digite sua senha: ".encode("utf-8"))
-                password = client.recv(1024).decode("utf-8").strip()
 
-                usuarios[username] = password
-                save_users(username, password)
-
-            print(f"--- Usuário {username} registrado ---")
-
-        if not username or not password:  # Verifica se os dados foram recebidos corretamente
-            client.send("--> ERRO: Login inválido.\n".encode("utf-8"))
+        if not username:
+            client.send("--> ERRO: Nome de usuário inválido.\n".encode("utf-8"))
             client.close()
             return
 
-
-        if username not in usuarios:
-            client.send("--> USUÁRIO NÃO CADASTRADO --\n> Deseja se cadastrar? (s/n): ".encode("utf-8"))
-            resposta = client.recv(1024).decode("utf-8").strip().lower()
-
-            if resposta != "s":
-                client.send("--> CONEXÃO ENCERRADA --\n".encode("utf-8"))
+        if opcao == "2":  # Registro
+            if username in usuarios:
+                client.send("--> ERRO: Usuário já existe! Tente outro nome.\n".encode("utf-8"))
                 client.close()
                 return
 
-            client.send("> Digite uma nova senha: ".encode("utf-8"))
+            client.send("> Crie uma nova senha: ".encode("utf-8"))
             password = client.recv(1024).decode("utf-8").strip()
 
             if not password:
@@ -92,12 +102,18 @@ def tratamento_messages(client):
                 client.close()
                 return
 
-            # Salva novo usuário e senha
+            # Registrar o usuário
             usuarios[username] = password
             save_users(username, password)
             client.send("--> NOVO USUÁRIO REGISTRADO COM SUCESSO!\n".encode("utf-8"))
             print(f"--- Usuário {username} registrado ---")
-        else:
+
+        elif opcao == "1":  # Login
+            if username not in usuarios:
+                client.send("--> ERRO: Usuário não cadastrado! Tente registrar primeiro.\n".encode("utf-8"))
+                client.close()
+                return
+
             client.send("> Digite sua senha: ".encode("utf-8"))
             password = client.recv(1024).decode("utf-8").strip()
 
@@ -106,9 +122,8 @@ def tratamento_messages(client):
                 client.close()
                 return
 
-        # Se chegou aqui, o login foi bem-sucedido
-        client.send("--> LOGIN BEM SUCEDIDO!\n".encode("utf-8"))
-        print(f"--- Usuário {username} conectado ---")
+            client.send("--> LOGIN BEM SUCEDIDO!\n".encode("utf-8"))
+            print(f"--- Usuário {username} conectado ---")
 
         while True:
             message = client.recv(2048)

@@ -1,6 +1,4 @@
 admin:1234
-kiubiu:amor
 gege:3112
-kb:12347
-sem papas:1234
-kio:111
+kiubiu:amor
+semp:12345
