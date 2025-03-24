@@ -3,7 +3,7 @@ import threading
 
 def client():
     ip = "127.0.0.1"
-    port = 12344
+    port = 1234
     
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     
@@ -32,10 +32,6 @@ def client():
         print("\n--> Conexão encerrada devido a erro de login.")
         client.close()
         return  
-    if "n" in resposta:
-        print("\n--> Conexão encerrada devido a erro de cadastro.")
-        client.close()
-        return
     
     # Criando múltiplas threads:
     thread_1 = threading.Thread(target=receiveMessages, args=[client])

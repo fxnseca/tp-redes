@@ -6,7 +6,7 @@ clients = []
 
 def server():
     ip = "127.0.0.1"
-    port = 12344
+    port = 1234
     
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     
@@ -53,51 +53,57 @@ def tratamento_messages(client):
     try:
         client.send("> Digite seu usuário: ".encode("utf-8"))
         username = client.recv(1024).decode("utf-8").strip()
-        if not username in usuarios:
-            client.send("--> USUARIO NAO CADASTRADO --\n> Deseja se cadastrar? (s/n): ".encode("utf-8"))
-            resposta = client.recv(1024).decode("utf-8").strip()
-            if resposta == "n":
-                client.send("--> CONEXÃO ENCERRADA --\n".encode("utf-8"))
-                client.close()
-                return
-            else:
-                client.send("> Digite sua senha: ".encode("utf-8"))
-                password = client.recv(1024).decode("utf-8").strip()
 
-                usuarios[username] = password
-                save_users(username, password)
-
-            print(f"--- Usuário {username} registrado ---")
-
-        if not username or not password:  # Verifica se os dados foram recebidos corretamente
-            client.send("--> ERRO: Login inválido.\n".encode("utf-8"))
+        if not username:
+            client.send("--> ERRO: Nome de usuário inválido.\n".encode("utf-8"))
             client.close()
             return
 
+        if username not in usuarios:
+            client.send("--> USUÁRIO NÃO CADASTRADO --\n> Deseja se cadastrar? (s/n): ".encode("utf-8"))
+            resposta = client.recv(1024).decode("utf-8").strip().lower()
 
-        if username in usuarios:
-            if usuarios[username] == password:
-                client.send("--> LOGIN BEM SUCEDIDO!\n".encode("utf-8"))
-                print(f"--- Usuário {username} conectado ---")
-            else:
+            if resposta != "s":
+                client.send("--> CONEXÃO ENCERRADA --\n".encode("utf-8"))
+                client.close()
+                return
+
+            client.send("> Digite uma nova senha: ".encode("utf-8"))
+            password = client.recv(1024).decode("utf-8").strip()
+
+            if not password:
+                client.send("--> ERRO: Senha inválida.\n".encode("utf-8"))
+                client.close()
+                return
+
+            # Salva novo usuário e senha
+            usuarios[username] = password
+            save_users(username, password)
+            client.send("--> NOVO USUÁRIO REGISTRADO COM SUCESSO!\n".encode("utf-8"))
+            print(f"--- Usuário {username} registrado ---")
+        else:
+            client.send("> Digite sua senha: ".encode("utf-8"))
+            password = client.recv(1024).decode("utf-8").strip()
+
+            if usuarios[username] != password:
                 client.send("--> SENHA INCORRETA!\n".encode("utf-8"))
                 client.close()
                 return
-        else:
-            usuarios[username] = password
-            save_users(username, password)
-            client.send("--> NOVO USUÁRIO REGISTRADO!\n".encode("utf-8"))
-            print(f"--- Usuário {username} registrado ---")
+
+        # Se chegou aqui, o login foi bem-sucedido
+        client.send("--> LOGIN BEM SUCEDIDO!\n".encode("utf-8"))
+        print(f"--- Usuário {username} conectado ---")
 
         while True:
             message = client.recv(2048)
             if not message:
                 break
             broadcast(message, client)
+
     except (ConnectionResetError, BrokenPipeError):
         print(f"--- Conexão perdida com {client} ---")
     finally:
-        deleteClient(client)  # Garante que o cliente seja removido corretamente
+        deleteClient(client)  # Remove cliente da lista
 
 
 def broadcast(message, client):
