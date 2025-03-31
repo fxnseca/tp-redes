@@ -13,6 +13,7 @@ def server():
     try:
         server.bind((ip, port))
         server.listen(5)  # Número de conexões que podem esperar no servidor
+        print("--> SERVIDOR INICIADO COM SUCESSO! ---")
     except:
         print("\n--> ERRO: NÃO FOI POSSÍVEL INICIAR O SERVIDOR.")
         return
@@ -64,10 +65,6 @@ def load_users():
     return usuarios
 
 usuarios = load_users()  # Carrega os usuários ao iniciar o servidor
-
-
-
-
 
 def save_users(username, password):
     with open("database.txt", "a") as file:  # 'a' para adicionar sem apagar o conteúdo
@@ -129,13 +126,38 @@ def tratamento_messages(client):
             message = client.recv(2048)
             if not message:
                 break
+
+            # Verifica se é um comando para envio de arquivo
+            if message.startswith(b"put "):
+                _, filename, filesize = message.split(" ", 2)
+                filesize = int(filesize)
+
+                # Criar diretório uploads, se não existir
+                if not os.path.exists("uploads"):
+                    os.makedirs("uploads")
+
+                filepath = os.path.join("uploads", filename)
+
+                with open(filepath, "wb") as file:
+                    received_bytes = 0
+                    while received_bytes < filesize:
+                        data = client.recv(min(4096, filesize - received_bytes))
+                        if not data:
+                            break
+                        file.write(data)
+                        received_bytes += len(data)
+
+
+                print(f"--> Arquivo '{filename}' recebido e salvo em 'uploads/'.")
+                client.send(f"--> Arquivo '{filename}' salvo no servidor.".encode("utf-8"))
+                continue  # Pula o broadcast para evitar enviar o comando 'put' como mensagem normal
+
             broadcast(message, client)
 
     except (ConnectionResetError, BrokenPipeError):
         print(f"--- Conexão perdida com {client} ---")
     finally:
         deleteClient(client)  # Remove cliente da lista
-
 
 def broadcast(message, client):
     for clnt in clients:

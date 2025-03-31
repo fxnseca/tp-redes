@@ -1,3 +1,4 @@
+import os
 import socket
 import threading  
 
@@ -80,11 +81,42 @@ def sendMessages(client, username):
                 print("\n--> Você saiu do chat.")
                 client.close()
                 break
+
+            if message.startswith("put "):  # Enviar arquivo
+                _, filename = message.split(" ", 1)
+
+                # Verifica se o arquivo existe
+                if not os.path.exists(filename):
+                    print(f"--> ERRO: Arquivo '{filename}' não encontrado.\nDeseja criar um novo arquivo? (s/n)")
+                    resposta = input().strip().lower()
+
+                    if resposta == "s":
+                        print(f"--> Criando arquivo '{filename}'. Informe o conteúdo:")
+                        conteudo = input()  # Captura o conteúdo do novo arquivo
+
+                        with open(filename, "w", encoding="utf-8") as file:
+                            file.write(conteudo)
+
+                        print(f"--> Arquivo '{filename}' criado com sucesso.")
+                    else:
+                        print("--> Operação cancelada.")
+                        continue  # Volta ao loop após cancelar a criação
+
+                # Obtém o tamanho do arquivo
+                filesize = os.path.getsize(filename)
+                client.send(f"put {filename} {filesize}".encode("utf-8"))
+
+                # Lê e envia o arquivo
+                with open(filename, "rb") as file:
+                    client.sendall(file.read())
+
+                print(f"--> Arquivo '{filename}' enviado para o servidor.")
+
+                continue  # Evita que o comando 'put' seja enviado como mensagem normal
             client.send(f'<{username}> {message}'.encode("utf-8"))
-        except:
+        except Exception:
             print("\n--> ERRO: Não foi possível enviar a mensagem.")
             client.close()
             break
-
 
 client()
