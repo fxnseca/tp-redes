@@ -93,7 +93,12 @@ def sendMessages(client, username):
                     if resposta == "s":
                         print(f"--> Criando arquivo '{filename}'. Informe o conteúdo:")
                         conteudo = input()  # Captura o conteúdo do novo arquivo
-                        with open(filename, "w", encoding="utf-8") as file:
+
+                        if not os.path.exists("cliente " + username):
+                            os.makedirs("cliente " + username)
+                        filepath = os.path.join("cliente " + username, filename)
+
+                        with open(filepath, "w", encoding="utf-8") as file:
                             file.write(conteudo)
 
                         print(f"--> Arquivo '{filename}' criado com sucesso.")
@@ -102,14 +107,16 @@ def sendMessages(client, username):
                         continue  # Volta ao loop após cancelar a criação
 
                 # Obtém o tamanho do arquivo
-                filesize = os.path.getsize(filename)
+                filesize = os.path.getsize(filepath)
                 client.send(f"put {filename} {filesize}".encode("utf-8"))
 
                 # Lê e envia o arquivo
-                with open(filename, "rb") as file:
+                with open(filepath, "rb") as file:
                     client.sendall(file.read())
 
                 print(f"--> Arquivo '{filename}' enviado para o servidor.")
+                os.remove(filepath)
+                print(f"--> Arquivo '{filename}' removido da pasta do cliente.")
 
                 continue  # Evita que o comando 'put' seja enviado como mensagem normal
             client.send(f'<{username}> {message}'.encode("utf-8"))
