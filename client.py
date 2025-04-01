@@ -4,7 +4,7 @@ import threading
 
 def client():
     ip = "127.0.0.1"
-    port = 12443
+    port = 12444
     
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     
@@ -82,6 +82,7 @@ def sendMessages(client, username):
                 client.close()
                 break
 
+            #Envia arquivo para o servidor 
             if message.startswith("put "):  # Enviar arquivo
                 _, filename = message.split(" ", 1)
 
@@ -94,11 +95,7 @@ def sendMessages(client, username):
                         print(f"--> Criando arquivo '{filename}'. Informe o conteúdo:")
                         conteudo = input()  # Captura o conteúdo do novo arquivo
 
-                        if not os.path.exists("cliente " + username):
-                            os.makedirs("cliente " + username)
-                        filepath = os.path.join("cliente " + username, filename)
-
-                        with open(filepath, "w", encoding="utf-8") as file:
+                        with open(filename, "w", encoding="utf-8") as file:
                             file.write(conteudo)
 
                         print(f"--> Arquivo '{filename}' criado com sucesso.")
@@ -107,16 +104,14 @@ def sendMessages(client, username):
                         continue  # Volta ao loop após cancelar a criação
 
                 # Obtém o tamanho do arquivo
-                filesize = os.path.getsize(filepath)
+                filesize = os.path.getsize(filename)
                 client.send(f"put {filename} {filesize}".encode("utf-8"))
 
                 # Lê e envia o arquivo
-                with open(filepath, "rb") as file:
+                with open(filename, "rb") as file:
                     client.sendall(file.read())
 
                 print(f"--> Arquivo '{filename}' enviado para o servidor.")
-                os.remove(filepath)
-                print(f"--> Arquivo '{filename}' removido da pasta do cliente.")
 
                 continue  # Evita que o comando 'put' seja enviado como mensagem normal
             client.send(f'<{username}> {message}'.encode("utf-8"))
@@ -137,6 +132,26 @@ def sendMessages(client, username):
                     print(f"--> Diretório alterado para '{os.getcwd()}'.")
                 else:
                     print(f"--> ERRO: Diretório '{folder_name}' não encontrado ou não é um diretório válido.")
+                continue  # Evita que o comando 'cd' seja enviado como mensagem normal
+
+
+            if message.startswith("cd.."):
+                parent_dir = os.path.dirname(os.getcwd())
+                os.chdir(parent_dir)
+                print(f"--> Diretório alterado para '{os.getcwd()}'.")
+                continue
+
+
+            if message.startswith("ls"):
+                upload_dir = os.path.join(os.getcwd(), "uploads")  # Corrected directory name
+                if os.path.exists(upload_dir) and os.path.isdir(upload_dir):
+                    files = os.listdir(upload_dir)
+                    if files:
+                        print(f"--> Arquivos e diretórios na pasta 'uploads':\n {' \n '.join(files)}")
+                    else:
+                        print("--> A pasta 'uploads' está vazia.")
+                else:
+                    print("--> ERRO: Pasta 'uploads' não encontrada.")
                 continue
         except Exception:
             print("\n--> ERRO: Não foi possível enviar a mensagem.")
