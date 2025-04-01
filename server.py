@@ -127,8 +127,10 @@ def tratamento_messages(client):
             if not message:
                 break
 
+            message = message.decode("utf-8")
+            print
             # Verifica se é um comando para envio de arquivo
-            if message.startswith(b"put "):
+            if message.startswith("put "):
                 _, filename, filesize = message.split(" ", 2)
                 filesize = int(filesize)
 

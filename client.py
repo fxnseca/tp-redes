@@ -93,7 +93,6 @@ def sendMessages(client, username):
                     if resposta == "s":
                         print(f"--> Criando arquivo '{filename}'. Informe o conteúdo:")
                         conteudo = input()  # Captura o conteúdo do novo arquivo
-
                         with open(filename, "w", encoding="utf-8") as file:
                             file.write(conteudo)
 
