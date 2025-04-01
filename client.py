@@ -125,6 +125,55 @@ def sendMessages(client, username):
                     print(f"--> ERRO: Diretório '{folder_name}' já existe.")
                 continue  # Evita que o comando 'mkdir' seja enviado como mensagem normal
 
+            if message.startswith("rmdir "):
+                _, folder_name = message.split(" ", 1)
+                if os.path.exists(folder_name) and os.path.isdir(folder_name):
+                    os.rmdir(folder_name)
+                    print(f"--> Diretório '{folder_name}' removido com sucesso.")
+                else:
+                    print(f"--> ERRO: Diretório '{folder_name}' não encontrado ou não é um diretório válido.")
+                continue  # Evita que o comando 'rmdir' seja enviado como mensagem normal
+
+               # Solicitar arquivo do servidor (GET)
+            if message.startswith("get "):
+                _, filename = message.split(" ", 1)
+                client.send(f"get {filename}".encode("utf-8"))
+
+                resposta = client.recv(1024).decode("utf-8")
+                if resposta.startswith("ERRO"):
+                    print(resposta)
+                    continue
+
+                try:
+                    _, filesize = resposta.split()
+                    filesize = int(filesize)
+                except ValueError:
+                    print("\n--> ERRO: Resposta do servidor em formato inesperado.")
+                    continue
+                pasta_cliente = f"cliente_{username}"
+                if not os.path.exists(pasta_cliente):
+                    os.makedirs(pasta_cliente)
+
+                filepath = os.path.join(pasta_cliente, filename)
+
+                with open(filepath, "wb") as file:
+                    received_bytes = 0
+                    while received_bytes < filesize:
+                        try:
+                            data = client.recv(min(4096, filesize - received_bytes))
+                            if not data:
+                                print("\n--> ERRO: Conexão interrompida durante o recebimento do arquivo.")
+                                break
+                            file.write(data)
+                            received_bytes += len(data)
+                        except Exception as e:
+                            print(f"\n--> ERRO: Ocorreu um problema ao receber o arquivo: {e}")
+                            break
+
+                print(f"--> Arquivo '{filename}' recebido e salvo em '{pasta_cliente}/'.")
+
+                continue  
+
             if message.startswith("cd "):
                 _, folder_name = message.split(" ", 1)
                 if os.path.exists(folder_name) and os.path.isdir(folder_name):

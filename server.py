@@ -128,7 +128,6 @@ def tratamento_messages(client):
                 break
 
             message = message.decode("utf-8")
-            print
             # Verifica se é um comando para envio de arquivo
             if message.startswith("put "):
                 _, filename, filesize = message.split(" ", 2)
@@ -152,7 +151,27 @@ def tratamento_messages(client):
 
                 print(f"--> Arquivo '{filename}' recebido e salvo em 'uploads/'.")
                 client.send(f"--> Arquivo '{filename}' salvo no servidor.".encode("utf-8"))
-                continue  # Pula o broadcast para evitar enviar o comando 'put' como mensagem normal
+                continue
+           # Enviando arquivo para o cliente (GET): Esta seção lida com a recuperação de arquivos armazenados no servidor pelo cliente.
+            if message.startswith("get "):
+                parts = message.split(" ", 1)
+                if len(parts) < 2 or not parts[1].strip():
+                    client.send("ERRO: Comando 'get' mal formatado. Use 'get <nome_do_arquivo>'.".encode("utf-8"))
+                    continue
+                _, filename = parts
+                pasta_servidor = "uploads"
+                filepath = os.path.join(pasta_servidor, filename)
+
+                if not os.path.exists(filepath):
+                    client.send(f"ERRO: Arquivo '{filename}' não encontrado no servidor.".encode("utf-8"))
+                    continue
+
+                filesize = os.path.getsize(filepath)
+                with open(filepath, "rb") as file:
+                    client.sendall(file.read())
+
+                print(f"--> Arquivo '{filename}' enviado para o cliente.")
+                continue  
 
             broadcast(message, client)
 
