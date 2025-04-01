@@ -120,6 +120,24 @@ def sendMessages(client, username):
 
                 continue  # Evita que o comando 'put' seja enviado como mensagem normal
             client.send(f'<{username}> {message}'.encode("utf-8"))
+
+            if message.startswith("mkdir "):
+                _, folder_name = message.split(" ", 1)
+                if not os.path.exists(folder_name):
+                    os.makedirs(folder_name)
+                    print(f"--> Diretório '{folder_name}' criado com sucesso.")
+                else:
+                    print(f"--> ERRO: Diretório '{folder_name}' já existe.")
+                continue  # Evita que o comando 'mkdir' seja enviado como mensagem normal
+
+            if message.startswith("cd "):
+                _, folder_name = message.split(" ", 1)
+                if os.path.exists(folder_name) and os.path.isdir(folder_name):
+                    os.chdir(folder_name)
+                    print(f"--> Diretório alterado para '{os.getcwd()}'.")
+                else:
+                    print(f"--> ERRO: Diretório '{folder_name}' não encontrado ou não é um diretório válido.")
+                continue
         except Exception:
             print("\n--> ERRO: Não foi possível enviar a mensagem.")
             client.close()
